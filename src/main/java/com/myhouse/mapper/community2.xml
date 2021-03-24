@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="mapper.community2">
+	
+	<select id="getInfoAll2" parameterType="java.lang.String" resultType="com.myhouse.vo.PhotoVO">
+	select * from h_photo where email=#{email}
+	</select>
+	
+	<select id="index_community_list" resultType="com.myhouse.vo.CommunityVO">
+		select * from (
+			select rownum prno, photo.* from (
+	 		select p.pno, m.nickname w_nickname, m.intro intro, m.member_image w_member_image, m.member_spimage w_member_simage,
+	     		 pcontent, pstyle, ptype, photo_image, photo_simage, to_char(pdate,'yyyy.mm.dd')pdate, phits, 
+	      		c.nickname c_nickname, c.member_image c_member_image, c.member_spimage c_member_simage, c_content,
+	      		plike, scrap, comments
+			from h_photo p, h_member m,
+			    (select * from(
+			    (select row_number() over(partition by pno order by pno) rno, pno, cno, nickname, member_image, member_spimage, c_content 
+			    from h_photo_comment, h_member where h_photo_comment.email=h_member.email and c_depth=1 order by cdate desc)) where rno=1) c,
+			    (select h_photo.pno pno, count(h_like.lno) plike from h_like, h_photo where h_photo.pno = h_like.pno(+) group by h_photo.pno) l,
+			    (select h_photo.pno pno, count(h_scrap.sno) scrap from h_scrap, h_photo where h_photo.pno = h_scrap.pno(+) group by h_photo.pno) s,
+			    (select pno, count(*)comments from h_photo_comment group by pno) co
+				where p.email=m.email and p.pno=c.pno(+) and  p.pno = l.pno and p.pno=s.pno and co.pno(+) = p.pno  order by plike desc, phits desc) photo)
+		where prno between 1 and 8
+	</select> 
+	
+	 <select id="list22" parameterType="java.lang.String" resultType="com.myhouse.vo.CommunityVO">
+		select * from (
+		select rownum prno, photo.* from (
+ 		select p.pno, m.nickname w_nickname, m.intro intro, m.member_image w_member_image, m.member_spimage w_member_simage,
+     		 pcontent, pstyle, ptype, photo_image, photo_simage, to_char(pdate,'yyyy.mm.dd')pdate, phits, 
+      		c.nickname c_nickname, c.member_image c_member_image, c.member_spimage c_member_simage, c_content,
+      		plike, scrap, comments
+		from h_photo p, h_member m,
+		    (select * from(
+		    (select row_number() over(partition by pno order by pno) rno, pno, cno, nickname, member_image, member_spimage, c_content 
+		    from h_photo_comment, h_member where h_photo_comment.email=h_member.email and c_depth=1 order by cdate desc)) where rno=1) c,
+		    (select h_photo.pno pno, count(h_like.lno) plike from h_like, h_photo where h_photo.pno = h_like.pno(+) group by h_photo.pno) l,
+		    (select h_photo.pno pno, count(h_scrap.sno) scrap from h_scrap, h_photo where h_photo.pno = h_scrap.pno(+) group by h_photo.pno) s,
+		    (select pno, count(*)comments from h_photo_comment group by pno) co
+			where p.email=m.email and p.pno=c.pno(+) and  p.pno = l.pno and p.pno=s.pno and co.pno(+) = p.pno  order by pdate desc, phits desc) photo)
+		where w_nickname like '%${value}%'
+	</select> 
+	
+  	
+</mapper>

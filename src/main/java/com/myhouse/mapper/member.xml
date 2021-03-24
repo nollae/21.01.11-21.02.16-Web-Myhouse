@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.member">
+	
+	<!-- id : getInfoAll -->
+	<select id="getInfoAll" parameterType="java.lang.String" resultType="com.myhouse.vo.MemberVO">
+	select * from h_member where email=#{email}
+	</select>
+	
+	<!-- id : sellerUpdate1 -->
+	<update id="sellerUpdate1" parameterType="java.lang.String" >
+		update h_member set seller=1 where email=#{email}
+	</update>
+	
+	<!-- id : sellerUpdate0 -->
+	<update id="sellerUpdate0" parameterType="java.lang.String" >
+		update h_member set seller=0 where email=#{email}
+	</update>
+	
+	<!-- id : memberlist -->
+	<select id="memberlist" parameterType="map" resultType="com.myhouse.vo.MemberVO">
+	select * from (select rownum rno,email,nickname,seller,to_char(mdate, 'yyyy.mm.dd') mdate
+			from (select * from h_member order by mdate desc)) 
+	where rno between #{start} and #{end}
+	</select> 
+	
+	<!-- id : memberlistcount -->
+	<select id="memberlistcount" resultType="int">
+	 	select count(*) from h_member
+	</select>
+	
+	<!-- id : stateUpdate1 -->
+	<update id="stateUpdate1" parameterType="java.lang.String" >
+		update h_interior set status=1 where ino=#{ino}
+	</update>
+	
+	<!-- id : stateUpdate0 -->
+	<update id="stateUpdate0" parameterType="java.lang.String" >
+		update h_interior set status=0 where ino=#{ino}
+	</update>
+	
+	<!-- id : getinfo3 -->
+	<select id="getinfo3" parameterType="java.lang.String" resultType="com.myhouse.vo.MemberVO">
+	select * from h_member where email=#{email}
+	</select>
+	
+	<!-- id : naverinsert -->
+	<insert id="naverinsert" parameterType="com.myhouse.vo.MemberVO">
+	insert into h_member values(#{email},#{pass},#{nickname},'','',
+		'','pf_img.png','pf_img.png','','','','',0,sysdate,'','','','','')
+	</insert>
+	
+	<!-- id : getinfo2 -->
+	<select id="getinfo2" parameterType="java.lang.String" resultType="com.myhouse.vo.SessionVO">
+	select nickname,email,member_spimage from h_member where email=#{naverId}
+	</select>
+	
+	<!-- id : getprofile -->
+	<select id="getprofile" parameterType="java.lang.String" resultType="java.lang.String">
+	select member_spimage from h_member where email=#{email}
+	</select>
+	
+	<!-- id : getinfo -->
+	<select id="getinfo" parameterType="java.lang.String" resultType="java.lang.String">
+	select pass,nickname from h_member where email=#{email}
+	</select>
+	
+	<!-- id : insert -->
+	<insert id="insert" parameterType="com.myhouse.vo.MemberVO">
+	insert into h_member values(#{email},#{pass},#{nickname},'','',
+		'','pf_img.png','pf_img.png','','','','',0,sysdate,'','','','','')
+	</insert>
+	
+	<!-- id : idcheck -->
+	<select id="idcheck" parameterType="java.lang.String" resultType="int">
+		select count(*) from h_member where email=#{email}
+	</select>
+	
+	<!-- id : login -->
+	 <select id="login" parameterType="com.myhouse.vo.MemberVO" resultType="com.myhouse.vo.SessionVO"> 
+		select count(*) result, nickname,email,member_spimage from h_member where email=#{email} and pass=#{pass} group by nickname,email,member_spimage
+	</select>
+</mapper>

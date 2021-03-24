@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.yktag">
+	<!-- 태그리스트 -->
+	<select id="taglist" parameterType="java.lang.String" resultType="com.myhouse.vo.tagVO">
+	 	select tno, company, ititle, h_goods.gno, goods_name,  to_char(goods_price,'999,999,999,999') goods_price, goods_simage
+   		from h_interior, h_goods, h_tag
+   		where h_interior.ino = h_goods.ino and h_goods.gno = h_tag.gno and h_tag.pno=#{pno}
+	</select>
+	
+	<!-- 태그갯수 -->
+	<select id="tagcount" parameterType="java.lang.String" resultType="int">
+	 	select count(*)
+   		from h_interior, h_goods, h_tag
+   		where h_interior.ino = h_goods.ino and h_goods.gno = h_tag.gno and h_tag.pno=#{pno}
+	</select>
+	
+	<!-- 태그넣기 -->
+	<insert id="inserttag" parameterType="map">
+		insert into h_tag
+    	values('t_'||seq_h_tag.nextval,#{pno},#{gno})
+	</insert>
+	
+	<!-- 태그삭제 -->
+	<delete id="deletetag" parameterType="java.lang.String">
+		delete h_tag where pno =#{pno}
+	</delete>
+	
+</mapper>

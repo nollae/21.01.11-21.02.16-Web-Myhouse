@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="mapper.notice">
+
+	<update id="noticeupdate1" parameterType="com.myhouse.vo.noticeVO">
+		update h_notice set ntitle=#{ntitle}, ncontent=#{ncontent} 
+		 where nno=#{nno}
+	</update>
+	<insert id="noticeinsert" parameterType="com.myhouse.vo.noticeVO">
+	insert into h_notice values
+			('n_'||SEQU_H_NOTICE.nextval,#{ntitle},sysdate,#{ncontent})
+	</insert>
+	<delete id="noticedelete" parameterType="java.lang.String">
+	delete from h_notice where nno=#{nno}
+	</delete>
+	
+	<select id="getDetail1" parameterType="java.lang.String" resultType="com.myhouse.vo.noticeVO">
+	 	select * from h_notice where nno=#{nno}
+	</select>
+
+	<select id="list2" parameterType="map" resultType="com.myhouse.vo.noticeVO">
+		select * from (select rownum rno,nno,ntitle,to_char(ndate, 'yyyy.mm.dd') ndate,ncontent
+				from (select * from h_notice order by ndate desc)) 
+		where rno between #{start1} and #{end1}
+	</select> 
+	
+	<select id="listcount2" resultType="int">
+	 	select count(*) from h_notice
+	</select>
+
+</mapper>

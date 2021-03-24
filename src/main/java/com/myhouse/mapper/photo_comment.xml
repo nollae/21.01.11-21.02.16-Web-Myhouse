@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="mapper.photocomment">
+	<!-- 댓글 갯수 -->
+	<select id="count" parameterType="java.lang.String" resultType="int">
+		select count(*) from h_photo_comment where pno=#{pno}
+	</select>
+	
+	<!-- 댓글 -->
+	<select id="list" parameterType="map" resultType="com.myhouse.vo.photo_commentVO">
+		select nickname, member_spimage member_simage,c1.*, rcount, getwrite, cliked
+		from h_member m, h_photo_comment c1, (select c_group, count(*)rcount from h_photo_comment 
+  			where c_depth= 2 
+    		and c_group in (select c_group from h_photo_comment) group by c_group)c2,
+        (select cno, count(*) getwrite from h_photo_comment where email=#{email} group by cno)c3,
+        (select cno,instr(c_like, #{email})cliked from h_photo_comment where pno='p03')c4
+		where m.email = c1.email and c1.c_group =c2.c_group(+) and c1.cno = c3.cno(+) and c1.cno=c4.cno(+) and pno=#{pno}
+		order by c1.c_group desc, c1.c_depth, cdate
+	</select>
+	
+	<!-- 답글 갯수 -->
+	<select id="re_count"  parameterType="java.lang.String" resultType="int">
+		 select count(*) from h_photo_comment where pno=#{pno} and c_depth=2
+	</select>
+	
+	<!-- 댓글 작성 -->
+	<insert id="getwrite" parameterType="java.lang.String">
+		insert into h_photo_comment values('c'||COMMENT_SEQUENCE.nextval,
+				#{email},#{pno},'',#{content},'', sysdate, 1, 'c'||COMMENT_SEQUENCE.nextval)
+	</insert>
+	
+	<!-- 답글 작성 -->
+	<insert id="getreplywrite" parameterType="java.lang.String">
+		insert into h_photo_comment values('c'||COMMENT_SEQUENCE.nextval,
+				#{email},#{pno},#{tag},#{content}, '', sysdate, 2, #{cgroup})
+	</insert>
+	
+	<!-- 자식 댓글이 있는 댓글 삭제 -->
+	<update id="getupdate" parameterType="java.lang.String">
+		update h_photo_comment set c_content =null where cno=#{cno}
+	</update>
+	
+	<!-- 댓글 삭제 -->
+	<delete id="getdelete" parameterType="java.lang.String">
+		delete from h_photo_comment where cno=#{cno}
+	</delete>
+	
+	<!-- 댓글 좋아요-->
+	<update id="getcommentlike" parameterType="map">
+		 update h_photo_comment set c_like = concat(c_like,#{email}) where cno=#{cno}
+	</update>
+	
+	<!-- 댓글 좋아요 취소-->
+	<update id="getdeletecommentlike" parameterType="map">
+		 update  h_photo_comment set c_like = replace(c_like, #{email}, '')  where cno=#{cno}
+	</update>
+</mapper> 

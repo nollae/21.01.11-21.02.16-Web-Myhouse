@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+
+<mapper namespace="mapper.photo2">
+	
+	
+	<!-- id=fcount  -->
+	<select id="fcount" parameterType="java.lang.String" resultType="int">
+		SELECT COUNT(*) FROM (SELECT FOLLOWER FROM H_MEMBER WHERE EMAIL=#{email})WHERE FOLLOWER IS NOT NULL
+	</select>
+	
+	
+	<!-- id=fcount1  -->
+	<select id="fcount1" parameterType="java.lang.String" resultType="int">
+		SELECT COUNT(*) FROM (SELECT FOLLOWING FROM H_MEMBER WHERE EMAIL=#{email}) WHERE FOLLOWING IS NOT NULL
+	</select>
+	
+	
+	
+	
+	<!-- id=reviewupdate -->
+	<update id="reviewupdate" parameterType="com.myhouse.vo.reviewVO" >
+		UPDATE H_REVIEW SET STAR=#{star},VCONTENT=#{vcontent}
+		<if test="review_image != null">
+				,REVIEW_IMAGE=#{review_image},REVIEW_SIMAGE=#{review_simage} 
+		</if>
+		WHERE GNO=#{gno}
+	</update>
+	
+	
+	
+	
+	<!-- id=reviewinsert  -->
+	<insert id="reviewinsert" parameterType="com.myhouse.vo.reviewVO">
+		INSERT INTO H_REVIEW VALUES('v_'||seq_h_review.nextval,#{email},#{gno},#{star},#{vcontent}
+		<if test="review_image != null">
+			,#{review_image},#{review_simage},SYSDATE)
+		</if>
+		,'','',SYSDATE)
+		
+	
+	</insert>
+	
+	
+	<!-- id=.reviewproc1 -->
+	<select id="reviewproc1" parameterType="java.lang.String" resultType="com.myhouse.vo.goodsVO">
+		SELECT ODS.INO,ODS.GNO,IOR.COMPANY,GOODS_NAME,GOODS_SIMAGE,VCONTENT,STAR FROM H_GOODS ODS, H_INTERIOR IOR, H_REVIEW IEW WHERE ODS.INO=IOR.INO AND ODS.GNO=IEW.GNO AND ODS.GNO=#{gno}
+	</select>
+	
+	
+	
+	<!-- id=reviewproc -->
+	<select id="reviewproc" parameterType="java.lang.String" resultType="com.myhouse.vo.goodsVO">
+		SELECT GNO,INO,GOODS_SIMAGE,GOODS_NAME,GOODS_PRICE,COMPANY FROM (SELECT GNO,ODS.INO,GOODS_SIMAGE,GOODS_NAME,GOODS_PRICE,COMPANY FROM H_GOODS ODS, H_INTERIOR IOR WHERE ODS.INO=IOR.INO) WHERE GNO=#{gno}
+	</select>
+	
+	
+	
+	<!-- id=scrapdelete -->
+	<delete id="scrapdelete" parameterType="map">
+		DELETE FROM H_SCRAP WHERE PNO=#{pno} AND EMAIL=#{email}
+	</delete>
+	
+	
+	<!-- id=picturescrap  -->
+	<insert id="picturescrap" parameterType="map">
+		INSERT INTO H_SCRAP VALUES('S_'||H_PICTURE_SCRAP_SEQUENCE.nextval,#{email},#{pno},'',SYSDATE)
+	</insert>
+	
+	
+	<!-- id=productcount -->
+	<select id="productcount" resultType="int">
+		SELECT COUNT(*) FROM (SELECT RAP.SNO, RAP.EMAIL,COMPANY,ITITLE,IOR.INO,INTERIOR_SIMAGE,RAP.SDATE FROM H_INTERIOR IOR,H_SCRAP RAP WHERE IOR.INO=RAP.INO AND RAP.EMAIL=#{email})
+	</select>
+	
+	<!-- id=hcount -->
+	<select id="hcount" resultType="int">
+		SELECT COUNT(*) FROM (SELECT RAP.SNO,RAP.EMAIL,OTO.PNO,PSTYLE,PTYPE,PHOTO_SIMAGE,PCONTENT 
+		FROM H_SCRAP RAP, H_PHOTO OTO WHERE OTO.PNO=RAP.PNO AND RAP.EMAIL=OTO.EMAIL AND RAP.EMAIL=#{email}) ORDER BY SNO DESC
+	</select>
+	
+	<!-- id=scrapphoto -->
+	<select id="scrapphoto" resultType="com.myhouse.vo.scrapVO">
+		SELECT SNO,EMAIL,PNO,PSTYLE,PTYPE,PHOTO_SIMAGE,PCONTENT 
+		FROM (SELECT RAP.SNO,RAP.EMAIL,OTO.PNO,PSTYLE,PTYPE,PHOTO_SIMAGE,PCONTENT 
+		FROM H_SCRAP RAP, H_PHOTO OTO WHERE OTO.PNO=RAP.PNO AND RAP.EMAIL=OTO.EMAIL 
+		AND RAP.EMAIL=#{email}) ORDER BY SNO DESC
+	
+	</select>
+	
+	
+	<!-- id=scrappro  -->
+	<select id="scrappro" resultType="com.myhouse.vo.scrapVO">
+		SELECT SNO,EMAIL,COMPANY,ITITLE,INO,INTERIOR_SIMAGE,SDATE 
+		FROM (SELECT RAP.SNO, RAP.EMAIL,COMPANY,ITITLE,IOR.INO,INTERIOR_SIMAGE,RAP.SDATE 
+		FROM H_INTERIOR IOR,H_SCRAP RAP WHERE IOR.INO=RAP.INO 
+		AND RAP.EMAIL=#{email}) ORDER BY SDATE DESC
+	</select>
+	
+	
+	<!-- id=scrapallcount  -->
+	<select id="scrapallcount" resultType="int">
+		SELECT COUNT(*) FROM(SELECT SNO,RAP.EMAIL,OTO.PNO,IOR.INO,PHOTO_SIMAGE,
+		INTERIOR_SIMAGE,SDATE FROM H_SCRAP RAP, H_INTERIOR IOR,H_PHOTO OTO 
+		WHERE RAP.INO=IOR.INO(+) AND RAP.PNO=OTO.PNO(+) AND RAP.EMAIL=#{email}) ORDER BY SDATE DESC
+	</select>
+	
+	
+	<!-- id=scraplist -->
+	<select id="scraplist" resultType="com.myhouse.vo.scrapVO">
+		SELECT SNO,EMAIL,PNO,INO,PHOTO_SIMAGE,INTERIOR_SIMAGE,SDATE 
+		FROM(SELECT SNO,RAP.EMAIL,OTO.PNO,IOR.INO,PHOTO_SIMAGE,INTERIOR_SIMAGE,SDATE 
+		FROM H_SCRAP RAP, H_INTERIOR IOR,H_PHOTO OTO WHERE RAP.INO=IOR.INO(+) AND RAP.PNO=OTO.PNO(+) 
+		AND RAP.EMAIL=#{email}) ORDER BY SDATE DESC
+	
+	</select>
+	
+	
+	
+	<!-- id=noticecontent  -->
+	<select id="noticecontent" resultType="com.myhouse.vo.noticeVO">
+		SELECT NNO,NTITLE,TO_CHAR(NDATE,'YY.MM.DD') NDATE,NCONTENT FROM H_NOTICE WHERE NNO=#{nno}
+	</select>
+	
+	<!-- id=notice  -->
+	<select id="notice" resultType="com.myhouse.vo.noticeVO">
+		SELECT NNO,NTITLE,TO_CHAR(NDATE,'YY.MM.DD') NDATE,NCONTENT FROM H_NOTICE
+	</select>
+	
+	
+	<!-- id=lactivity  -->
+	<select id ="lactivity" resultType="com.myhouse.vo.likeVO">
+		SELECT * FROM (SELECT LNO,IKE.EMAIL,IKE.PNO,PHOTO_SIMAGE,PHOTO_LIKE 
+		FROM H_LIKE IKE, H_PHOTO OTO WHERE IKE.PNO=OTO.PNO AND PHOTO_LIKE='1' 
+		AND IKE.EMAIL=#{email}) ORDER BY LNO DESC
+	
+	
+	</select>
+	
+	
+	<!-- id=plikecount  -->
+	<select id="plikecount" resultType="int">
+		SELECT COUNT(*) FROM H_LIKE WHERE PNO=#{pno}
+	</select>
+	
+	
+	<!-- id=panmecount -->
+	<select id="panmecount" resultType="int">
+		SELECT COUNT(*) FROM (SELECT GNO,IOR.INO,IOR.EMAIL FROM H_GOODS ODS,H_INTERIOR IOR WHERE IOR.INO=ODS.INO AND IOR.EMAIL=#{email})
+	
+	</select>
+	
+	
+	<!-- id=panme -->
+	<select id="panme" resultType="com.myhouse.vo.interiorVO">
+		SELECT IOR.INO,EMAIL,COMPANY,ITITLE,GOODS_SIMAGE,COLOR,GOODS_PRICE,STATUS FROM H_INTERIOR IOR, H_GOODS ODS WHERE EMAIL=#{email} AND IOR.INO=ODS.INO
+	</select>
+	
+	
+	
+	<!--  id=plikedelete  -->
+	<delete id="plikedelete" parameterType="map">
+		DELETE H_LIKE WHERE PNO=#{pno} AND EMAIL=#{email}
+	
+	</delete>
+	
+	
+	
+	
+	<!-- id=plike -->
+	<insert id="plike" parameterType="map">
+		INSERT INTO H_LIKE VALUES('L_'||H_LIKE_SEQUENCE.nextval,#{email},#{pno},'1')
+	</insert>
+	
+	
+	<!-- id=nickname -->
+	<select	id="nickname" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT EMAIL FROM H_MEMBER WHERE NICKNAME=#{NICKNAME}
+	
+	</select>
+	
+	
+	<!-- id=reviewcount -->
+	<select id="reviewcount" resultType="int">
+		SELECT COUNT(*) FROM H_GOODS ODS, H_INTERIOR IOR, H_ORDER DER WHERE DER.EMAIL=#{email} AND IOR.INO=ODS.INO AND ODS.GNO=DER.GNO AND OSTATUS='1'
+	</select>
+	
+	
+	<!-- id=reviewpage -->
+	<select id="reviewpage" resultType="com.myhouse.vo.goodsVO">
+		SELECT ODS.GNO,IOR.INO,DER.EMAIL,COMPANY,ITITLE,GOODS_SIMAGE,GOODS_PRICE,OSTATUS 
+		FROM H_GOODS ODS, H_INTERIOR IOR, H_ORDER DER 
+		WHERE DER.EMAIL=#{email} AND IOR.INO=ODS.INO AND ODS.GNO=DER.GNO AND OSTATUS='1'
+	</select>
+	
+	
+	<!-- id=qnacount -->
+	<select id="qnacount" resultType="int">
+		SELECT COUNT(*) FROM(SELECT DISTINCT QNO,IOR.INO,ODS.GNO,QTYPE,QCONTENT,QREPLY,GOODS_SIMAGE,
+		QSTATUS,QDATE,QDATE_R FROM H_QUESTION TION, H_MEMBER MEM, H_INTERIOR IOR,H_GOODS ODS 
+		WHERE IOR.INO=ODS.INO AND ODS.GNO=TION.GNO AND IOR.EMAIL=#{email})
+		WHERE QSTATUS='1' ORDER BY QDATE DESC
+	
+	</select>
+	
+	
+	
+	<!-- id=qna -->
+	<select id="qna" resultType="com.myhouse.vo.questionVO">
+		SELECT * FROM(SELECT DISTINCT QNO,IOR.INO,ODS.GNO,QTYPE,QCONTENT,QREPLY,GOODS_SIMAGE,QSTATUS,QDATE,QDATE_R 
+		FROM H_QUESTION TION, H_MEMBER MEM, H_INTERIOR IOR,H_GOODS ODS WHERE IOR.INO=ODS.INO AND ODS.GNO=TION.GNO 
+		AND IOR.EMAIL=#{email})
+		WHERE QSTATUS='1' ORDER BY QDATE DESC
+	
+	</select>
+
+
+	<!-- id=questlcount -->
+	<select id="questlcount" resultType="int">
+		SELECT COUNT(*) FROM (SELECT QNO,MEM.EMAIL,TION.GNO,QTYPE,QCONTENT,QSTATUS,QDATE 
+		FROM H_QUESTION TION, H_MEMBER MEM, H_GOODS ODS WHERE ODS.GNO=TION.GNO AND MEM.EMAIL=TION.EMAIL)
+		WHERE QSTATUS='1' AND EMAIL=#{email} ORDER BY QDATE DESC
+	
+	</select>
+	
+	
+	
+
+	<!-- id=questlist -->
+	<select id="questlist" resultType="com.myhouse.vo.questionVO">
+		SELECT QNO,EMAIL,GNO,QTYPE,QCONTENT,QSTATUS,QDATE 
+		FROM (SELECT QNO,MEM.EMAIL,TION.GNO,QTYPE,QCONTENT,QSTATUS,QDATE 
+		FROM H_QUESTION TION, H_MEMBER MEM, H_GOODS ODS WHERE ODS.GNO=TION.GNO 
+		AND MEM.EMAIL=TION.EMAIL)WHERE QSTATUS='1' AND EMAIL=#{email} ORDER BY QDATE DESC	
+	</select>
+
+
+	<!-- id=passchange  -->
+	<update id="passchange" parameterType="map">
+		UPDATE H_MEMBER SET PASS=#{pass} WHERE EMAIL=#{email}
+	</update>
+	
+	
+	<!-- id=review(최신순) -->
+	<select id="review1" resultType="com.myhouse.vo.reviewVO">
+		SELECT INO,GNO,EMAIL,STAR,COMPANY,ITITLE,REVIEW_SIMAGE,VDATE,VCONTENT,OSTATUS,INTERIOR_SIMAGE
+		FROM(SELECT IOR.INO,ODS.GNO,DER.EMAIL,STAR,COMPANY,VIE.REVIEW_SIMAGE,ITITLE,
+		TO_CHAR(VDATE,'YY.MM.DD') VDATE,VCONTENT,OSTATUS,INTERIOR_SIMAGE FROM H_REVIEW VIE, H_GOODS ODS, 
+		H_INTERIOR IOR,H_ORDER DER WHERE ODS.GNO=VIE.GNO AND IOR.INO=ODS.INO AND ODS.GNO=DER.GNO AND OSTATUS='1')
+		WHERE EMAIL=#{email} ORDER BY VDATE DESC
+		
+	</select>
+
+	
+	<!-- id=reviewcount1 -->
+	<select id="reviewcount1" resultType="int">
+		SELECT COUNT(*) FROM(SELECT IOR.INO,ODS.GNO,DER.EMAIL,STAR,COMPANY,IOR.INTERIOR_SIMAGE,ITITLE,
+		TO_CHAR(VDATE,'YY.MM.DD') VDATE,VCONTENT,OSTATUS FROM H_REVIEW VIE, H_GOODS ODS, H_INTERIOR IOR,
+		H_ORDER DER WHERE ODS.GNO=VIE.GNO AND IOR.INO=ODS.INO AND ODS.GNO=DER.GNO AND OSTATUS='1')
+		WHERE EMAIL=#{email} ORDER BY STAR DESC
+	</select>
+	
+	
+
+	<!-- id=review(베스트순) -->
+	<select id="review" resultType="com.myhouse.vo.reviewVO">
+		SELECT INO,GNO,EMAIL,STAR,COMPANY,ITITLE,REVIEW_SIMAGE,VDATE,VCONTENT,OSTATUS,INTERIOR_SIMAGE 
+		FROM(SELECT IOR.INO,ODS.GNO,DER.EMAIL,STAR,COMPANY,VIE.REVIEW_SIMAGE,ITITLE,TO_CHAR(VDATE,'YY.MM.DD') VDATE,
+		VCONTENT,OSTATUS,INTERIOR_SIMAGE FROM H_REVIEW VIE, H_GOODS ODS, H_INTERIOR IOR,H_ORDER DER 
+		WHERE ODS.GNO=VIE.GNO AND IOR.INO=ODS.INO AND ODS.GNO=DER.GNO AND OSTATUS='1')
+		WHERE EMAIL=#{email} ORDER BY STAR DESC
+	</select>
+
+
+
+
+
+	<!-- id=update  -->
+	<update id="update" parameterType="com.myhouse.vo.MemberVO">
+		UPDATE H_MEMBER SET 
+		NICKNAME=#{nickname} ,HOMEPAGE=#{homepage} 
+		,GENDER=#{gender} , BIRTH=#{birth} , INTRO=#{intro} 
+			<if test="member_image != null">
+				,MEMBER_IMAGE=#{member_image}, MEMBER_SPIMAGE=#{member_spimage}
+			</if>
+		WHERE EMAIL=#{email}
+	</update>
+
+
+	<!-- id=option -->
+	<select id="option" resultType="com.myhouse.vo.MemberVO">
+		SELECT EMAIL,NICKNAME,HOMEPAGE,GENDER,BIRTH,MEMBER_SPIMAGE,INTRO FROM H_MEMBER WHERE EMAIL=#{email}
+	</select>
+
+	
+
+	<!-- id=orderlist -->
+	<select id="orderlist" resultType="com.myhouse.vo.interiorVO">
+		SELECT * FROM(SELECT ONO,IOR.INO,ODS.GNO, DER.EMAIL,OSTATUS,OCOUNT, COMPANY,ITITLE,INTERIOR_SIMAGE,TO_CHAR(IDATE,'YY.MM.DD') IDATE,SEASON,COLOR,GOODS_PRICE
+		FROM H_INTERIOR IOR,H_GOODS ODS,H_ORDER DER WHERE ODS.GNO=DER.GNO AND IOR.INO=ODS.INO AND OSTATUS='1' AND DER.EMAIL=#{email})ORDER BY INO DESC
+	</select>
+	
+	<!-- id=ordercount  -->
+	<select id="ordercount" resultType="int">
+		SELECT COUNT(*) FROM(SELECT ONO,IOR.INO,ODS.GNO, DER.EMAIL,OSTATUS,OCOUNT, COMPANY,ITITLE,INTERIOR_SIMAGE,TO_CHAR(IDATE,'YY.MM.DD') IDATE,SEASON,COLOR,GOODS_PRICE 
+		FROM H_INTERIOR IOR,H_GOODS ODS,H_ORDER DER WHERE ODS.GNO=DER.GNO AND IOR.INO=ODS.INO AND OSTATUS='1' AND DER.EMAIL=#{email})ORDER BY INO DESC
+	</select>
+
+
+	<!-- id=likelist -->
+	<select id="likelist" resultType="com.myhouse.vo.PhotoVO"> 
+		SELECT DISTINCT LIK.EMAIL,PHO.PNO,PHOTO_SIMAGE,PHOTO_LIKE 
+		FROM H_PHOTO PHO, H_MEMBER MEM, H_LIKE LIK WHERE PHOTO_LIKE='1' AND PHO.PNO=LIK.PNO AND LIK.EMAIL=#{email} ORDER BY PNO DESC
+	</select>
+
+
+
+	<!-- id=profile  -->
+	<select id="profile" resultType="com.myhouse.vo.MemberVO">
+		SELECT EMAIL,NICKNAME,GENDER,BIRTH,MEMBER_SPIMAGE,FOLLOWER,FOLLOWING FROM H_MEMBER WHERE EMAIL=#{email}
+	</select>
+
+
+	<!-- id=picture  -->
+	<select id="picture" resultType="com.myhouse.vo.PhotoVO">
+	select h_photo.pno, email, pcontent, photo_simage, phits, plike, islike,PSCRAP,ISCRAP from h_photo,
+ (select h_photo.pno pno, count(h_like.lno) plike from h_like, h_photo where h_photo.pno = h_like.pno(+) group by h_photo.pno) l,
+  (select h_photo.pno pno, count(h_like.lno) islike from h_photo,h_like where h_photo.pno=h_like.pno(+) group by h_photo.pno) mlike,
+  (SELECT H_PHOTO.PNO PNO, COUNT(H_SCRAP.SNO) PSCRAP FROM H_SCRAP, H_PHOTO WHERE H_PHOTO.PNO = H_SCRAP.PNO(+) GROUP BY H_PHOTO.PNO) SC,
+  (SELECT H_PHOTO.PNO PNO, COUNT(H_SCRAP.SNO) ISCRAP FROM H_PHOTO,H_SCRAP WHERE H_PHOTO.PNO = H_SCRAP.PNO(+) GROUP BY H_PHOTO.PNO) MSCRAP
+ where l.pno = h_photo.pno and mlike.pno=h_photo.pno and SC.pno = h_photo.pno and MSCRAP.pno=h_photo.pno and email=#{email}
+	</select>
+		
+	<!-- id=scrapcount -->
+	<select id="scrapcount" resultType="int">
+		SELECT COUNT(*) FROM H_SCRAP WHERE EMAIL=#{email}
+	</select>
+	
+	
+
+	<!-- id=photocount -->
+	<select id="photocount" resultType="int">
+		SELECT COUNT(*) FROM H_PHOTO WHERE EMAIL=#{email}
+	</select>
+
+	
+	<!-- id=likecount  -->
+	<select id="likecount" resultType="int">
+		SELECT COUNT(*) FROM 
+		(SELECT DISTINCT LIK.EMAIL,PHO.PNO,PHOTO_SIMAGE,PHOTO_LIKE FROM H_PHOTO PHO,
+		 H_MEMBER MEM, H_LIKE LIK WHERE PHOTO_LIKE='1' AND PHO.PNO=LIK.PNO 
+		 AND LIK.EMAIL=#{email} ORDER BY PNO DESC)
+	</select>
+
+
+
+	<!-- id=photolist -->
+	<select id="photolist" resultType="com.myhouse.vo.PhotoVO">
+		SELECT PNO,EMAIL,PHOTO_SIMAGE FROM H_PHOTO WHERE EMAIL=#{email} ORDER BY PDATE
+	</select>
+
+
+
+	<!-- id=memberdelete -->
+	<delete id="memberdelete">
+		DELETE FROM H_MEMBER WHERE EMAIL=#{email}
+	</delete>
+
+
+</mapper>
+
+
+

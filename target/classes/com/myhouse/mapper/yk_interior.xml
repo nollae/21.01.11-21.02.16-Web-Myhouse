@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="mapper.ykinterior">
+
+<insert id="insert" parameterType="com.myhouse.vo.interiorVO">
+	insert into h_interior values (#{ino},#{email},#{company},#{ititle},
+		#{interior_image}, #{interior_simage}, sysdate, #{category}, 
+		<choose>
+			<when test="tone != null">
+			#{tone},
+			</when>
+			<otherwise>
+			'',
+			</otherwise>
+		</choose>
+			<choose>
+			<when test="color != null">
+			#{color},
+			</when>
+			<otherwise>
+			'',
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="season != null">
+			#{season},
+			</when>
+			<otherwise>
+			'',
+			</otherwise>
+		</choose>
+		0)
+</insert>
+
+</mapper>

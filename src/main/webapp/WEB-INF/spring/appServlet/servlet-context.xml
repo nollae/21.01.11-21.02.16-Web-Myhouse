@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+	
+	<!-- Enables the Spring MVC @Controller programming model -->
+	<annotation-driven />
+
+	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->
+	<resources mapping="/resources/**" location="/resources/" />
+	<resources mapping="/css/**" location="/resources/css/" />
+	<resources mapping="/js/**" location="/resources/js/" />
+	<resources mapping="/images/**" location="/resources/images/" />
+	
+
+	<!-- DAO Object생성 -->
+	<beans:bean class="com.myhouse.dao.MypagePhotoDAO" id="mypagephotDAO"></beans:bean>
+	<beans:bean class="com.spring.service1.MypageServiceImpl" id="mypageService"></beans:bean>
+	
+		<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+	<context:component-scan base-package="com.test.tst" />
+	<!-- NaverLoginBO Class에 대한 Bean설정 추가 -->
+	<beans:bean id="naverLoginBO" class="com.test.tst.NaverLoginBO" />
+	<!--  메일전송을 위한 bean  -->
+	<!-- Gmail -->
+	<beans:bean id="mailSender"
+		class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<beans:property name="host" value="smtp.gmail.com" />
+		<beans:property name="port" value="587" /><!-- 465 or 25 -->
+		<beans:property name="username" value="lyj6054@gmail.com" />
+		<beans:property name="password" value="dkanehahfmrp1@@" />
+		<beans:property name="defaultEncoding" value="utf-8" />
+		<beans:property name="javaMailProperties">
+			<beans:props>
+				<beans:prop key="mail.transport.protocol">smtp</beans:prop>
+				<beans:prop key="mail.smtp.auth">true</beans:prop>
+				<beans:prop key="mail.smtp.starttls.enable">true</beans:prop>
+				<beans:prop key="mail.debug">true</beans:prop>
+			</beans:props>
+		</beans:property>
+	</beans:bean>
+	
+	<beans:bean class="com.myhouse.dao.yh_InteriorDAO" id="interiorDAO"></beans:bean>
+	<beans:bean class="com.spring.service.InteriorServiceImpl" id="interiorService"></beans:bean>
+	
+ 	<beans:bean class="com.myhouse.dao.MemberDAO" id="memberDAO"></beans:bean>
+	<beans:bean class="com.spring.service1.MemberServiceImpl" id="memberService"></beans:bean>
+ 	<beans:bean class="com.myhouse.dao.H_UploadPhotoDAO" id="uploadDAO"></beans:bean>
+	<beans:bean class="com.spring.service.UploadPhotoServiceImpl" id="uploadService"></beans:bean>
+ 	<beans:bean class="com.myhouse.dao.H_basketDAO" id="basketDAO"></beans:bean>
+	<beans:bean class="com.spring.service.ShoppingBasketImpl" id="ShoppingBasketService"></beans:bean>
+	
+	<beans:bean class="com.spring.service.CommunityServcieImpl" id="communityService"></beans:bean>
+	<beans:bean class="com.spring.service.SalesApplicationServiceImpl" id="salesService"></beans:bean>
+	<beans:bean class="com.myhouse.dao.CommunityDAO" id="communityDAO"></beans:bean>
+	<beans:bean class="com.myhouse.dao.yk_PhotoDAO" id="photoDAO"></beans:bean>
+	<beans:bean class="com.myhouse.dao.photo_commentDAO" id="photo_commentDAO"></beans:bean>
+	<beans:bean class="com.myhouse.dao.yk_likeDAO" id="likeDAO"></beans:bean>
+	<beans:bean class="com.myhouse.dao.yk_scrapDAO" id="scrapDAO"></beans:bean>
+	<beans:bean class="com.myhouse.dao.yk_MemberDAO" id="ykmemberDAO"></beans:bean>
+	<beans:bean class="com.myhouse.dao.yk_interiorDAO" id="ykinteriorDAO"></beans:bean>
+	<beans:bean class="com.myhouse.dao.yk_goodsDAO" id="ykgoodsDAO"></beans:bean>
+	<beans:bean class="com.myhouse.dao.yk_tagDAO" id="yktagDAO"></beans:bean>
+	
+	
+	<beans:bean class="com.myhouse.dao.NoticeDAO" id="noticeDAO"></beans:bean>
+	<beans:bean class="com.spring.service.NoticeServiceImpl" id="noticeService"></beans:bean>
+	<!-- search에 쓰이는 beans -->
+	<beans:bean class="com.myhouse.dao.yj_InteriorDAO" id="interiorDAO2"></beans:bean>
+	<beans:bean class="com.spring.service1.SearchServiceImpl" id="searchService"></beans:bean>
+	<beans:bean class="com.myhouse.dao.yj_communityDAO" id="communityDAO2"></beans:bean>
+	<!-- multipartResolver -->
+	<beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"></beans:bean> 
+	
+		<!-- Interceptor Object -->
+	<beans:bean id="authInterceptor" class="com.myhouse.interceptor.AuthHandlerInterceptor">
+	</beans:bean>
+	<interceptors>
+		<interceptor>
+			<mapping path="/admin123*"/> <!-- 체크할 url 주소 -->
+			<beans:ref bean="authInterceptor"/> <!-- 체크를 진행할 객체 -->
+		</interceptor>
+	</interceptors>
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+	
+	<context:component-scan base-package="com.spring.myhouse" />
+	<context:component-scan base-package="com.spring.controller" />
+	
+	
+</beans:beans>

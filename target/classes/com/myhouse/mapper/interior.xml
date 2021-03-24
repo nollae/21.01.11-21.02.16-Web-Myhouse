@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="mapper.interior">
+
+<!-- 주문자 배송지 나열하기 -->
+<select id="order-select-addr" parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO">
+	select * from (select distinct rownum rno, gno, o.ino, goods_simage, goods_name, goods_price, ono, m.email, ocount, ostatus, ititle, company, addr, addr_num, memo, phone, name
+	from (select distinct o.gno, g.ino, goods_simage, goods_name, goods_price, ono, o.email, ocount, ostatus
+	from h_goods g, h_order o where g.gno = o.gno) o, (select distinct g.ino, ititle, company from h_interior i , h_goods g where i.ino=g.ino) i,
+	(select email, addr, addr_num, memo, phone, name from h_member) m
+	where o.ino = i.ino and o.email = m.email and m.email=#{email} and ostatus='0' ) where rno=1
+</select>
+<!-- 주문 상품 나열하기 -->
+<select id="order-select" parameterType="map" resultType="com.myhouse.vo.StoreIndexVO">
+	select * from(select distinct rownum rno, gno, o.ino, goods_simage, goods_name, to_char(goods_price,'999,999,999,999') goods_price, ono, m.email, ocount, ostatus, ititle, company, addr, addr_num, memo, phone, name
+	from (select distinct o.gno, g.ino, goods_simage, goods_name, goods_price, ono, o.email, ocount, ostatus
+		from h_goods g, h_order o where g.gno = o.gno) o, (select distinct g.ino, ititle, company from h_interior i , h_goods g where i.ino=g.ino) i,
+		(select email, addr, addr_num, memo, phone, name from h_member) m
+	where o.ino = i.ino and o.email = m.email and m.email=#{email} and ostatus='0' )
+	where 
+	<foreach collection="gnolist" item="gno" index="index" separator='or'>
+	gno=#{gno}
+	</foreach>
+</select>
+<select id="order-select2" parameterType="map" resultType="int">
+	select count(*) from h_order where gno=#{gno} and ocount=#{ocount} and email=#{email} and ostatus='0'
+</select>
+<select id="pay-ostatus-insert2" parameterType="map" resultType="int">
+	select count(*) from h_order where ostatus='1' and ono=#{ono} and email=#{email}
+</select>
+
+<!-- 배송지 입력 :: 결제할떄!! 저장 -->
+<update id="pay-addr-insert" parameterType="com.myhouse.vo.StoreIndexVO">
+	update h_member set phone=#{phone}, name=#{name}, memo=#{memo} where email=#{email}
+</update>
+<!-- 배송지 입력 :: 결제할떄!! 저장 -->
+<update id="pay-ostatus-insert" parameterType="com.myhouse.vo.StoreIndexVO">
+	update h_order set ostatus='1', odate=sysdate where email=#{email} and ono=#{ono}
+</update>
+
+<!-- 배송지 입력 :: 저장 -->
+<update id="addr-insert" parameterType="com.myhouse.vo.StoreIndexVO">
+	update h_member set addr=#{addr}, addr_num=#{addr_num}, phone=#{phone}, name=#{name} where email=#{email}
+</update>
+
+<!-- 바로구매 클릭 - order에 추가하기 -->
+<insert id="order-insert" parameterType="map">
+	insert into h_order values ('o_'||seq_h_order.nextval , #{email}, #{gno}, #{ocount}, '0', sysdate)
+</insert>
+
+<!-- 전체 리스트 카운트 - 문의 -->
+<select id="question-count" parameterType="java.lang.String" resultType="int">
+	select distinct count(*) from h_question q ,h_goods g where q.gno = g.gno and ino=#{ino}
+</select>
+
+<!-- 전체 리스트 카운트 - 리뷰 -->
+<select id="review-count" parameterType="java.lang.String" resultType="int">
+	select count(*) from h_review v, h_goods g where v.gno = g.gno and ino=#{ino}
+</select>
+
+<!-- 문의답변 삭제 -->
+<update id="interior-question-answer-delete" parameterType="java.lang.String">
+	update h_question set qreply='', qdate_r='', qstatus=0 where qno=#{qno}
+</update>
+
+<!-- 문의답변 화면 -->
+<select id="interior-question-answer-proc" parameterType="java.lang.String"  resultType="com.myhouse.vo.StoreIndexVO">
+	  select * from ( select rno, gno, q.ino, goods_name, qno, q.email, qtype, qcontent, qreply, qstatus, TO_CHAR(qdate, 'YYYY/MM/DD HH:MI:SS PM') qdate, 
+         TO_CHAR(qdate_r, 'YYYY/MM/DD HH:MI:SS PM') qdate_r, ono, ostatus, nickname, company, s.email selleremail, s.seller, s.status sstatus
+      from(select rownum rno, gno, ino, goods_name, qno, email, qtype, qcontent, qreply, qstatus, qdate, qdate_r, ono, ostatus
+         from(select q.gno, ino, goods_name, qno, q.email, qtype, qcontent, qreply, qstatus, qdate, qdate_r, ono, ostatus
+         from h_goods g,(select qno, q.email, q.gno, qtype, qcontent, qreply, qstatus, qdate, qdate_r, ono, ocount, ostatus 
+          from h_question q, h_order o where q.gno = o.gno(+) and q.email = o.email(+)) q where g.gno = q.gno )
+            where ino=#{ino}) q, h_member m, h_interior i, 
+            (select h_member.email, seller, h_interior.status, ino 
+              from h_member, h_interior 
+              where  h_member.email in (select distinct h_member.email from h_interior, h_member 
+                                        where h_interior.ino in (select distinct ino from h_goods , h_question where h_goods.gno = h_question.gno)) 
+            and h_interior.email = h_member.email and seller =1 and h_interior.status=1)s
+      where q.email = m.email and i.ino = q.ino and s.ino = q.ino order by qno desc) where qno=#{qno}
+</select>
+
+<!-- 문의답변 입력 및 수정-->
+<update id="interior-question-answer" parameterType="map" >
+	update h_question set qreply=#{qreply}, qdate_r=sysdate, qstatus=1 where qno=#{qno}
+</update>
+
+<!-- 문의작성하기 -->
+<insert id="interior-question-insert" parameterType="com.myhouse.vo.StoreIndexVO">
+	insert into h_question values('q_'||seq_h_question.nextval,#{email},#{gno},#{qtype},#{qcontent},'',0,sysdate,'')
+</insert>
+
+<!-- 문의하기 -->
+<select id="interior-question" parameterType="map" resultType="com.myhouse.vo.StoreIndexVO">
+	select * from ( select * from ( select rno, gno, q.ino, goods_name, qno, q.email, qtype, qcontent, qreply, qstatus, TO_CHAR(qdate, 'YYYY/MM/DD HH:MI:SS PM') qdate, 
+         TO_CHAR(qdate_r, 'YYYY/MM/DD HH:MI:SS PM') qdate_r, ono, ostatus, nickname, company, s.email selleremail, s.seller, s.status sstatus
+      from(select rownum rno, gno, ino, goods_name, qno, email, qtype, qcontent, qreply, qstatus, qdate, qdate_r, ono, ostatus
+         from(select q.gno, ino, goods_name, qno, q.email, qtype, qcontent, qreply, qstatus, qdate, qdate_r, ono, ostatus
+         from h_goods g,(select qno, q.email, q.gno, qtype, qcontent, qreply, qstatus, qdate, qdate_r, ono, ocount, ostatus 
+          from h_question q, h_order o where q.gno = o.gno(+) and q.email = o.email(+)) q where g.gno = q.gno )
+            where ino=#{ino}) q, h_member m, h_interior i, 
+            (select h_member.email, seller, h_interior.status, ino 
+              from h_member, h_interior 
+              where  h_member.email in (select distinct h_member.email from h_interior, h_member 
+                                        where h_interior.ino in (select distinct ino from h_goods , h_question where h_goods.gno = h_question.gno)) 
+            and h_interior.email = h_member.email and seller =1 and h_interior.status=1)s
+      where q.email = m.email and i.ino = q.ino and s.ino = q.ino order by qno desc))
+	where rno between #{start} and #{end} order by rno asc
+</select>
+
+<!-- 리뷰작성하기 -->
+<insert id="interior-review-insert" parameterType="com.myhouse.vo.StoreIndexVO">
+	insert into h_review values
+	<choose>
+		<when test="review_image != null">
+			('v_'||seq_h_review.nextval,#{email},#{gno},#{star},#{vcontent},#{review_image},#{review_simage},sysdate)
+		</when>
+		<otherwise>
+			('v_'||seq_h_review.nextval,#{email},#{gno},#{star},#{vcontent},'','',sysdate)
+		</otherwise>
+	</choose>
+</insert>
+
+<!-- 리뷰 - 상품리스트 선택 -->
+<select id="interior-review-goods-list" parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO">
+	select company, ititle, goods_simage, goods_name from h_interior i, h_goods g where i.ino = g.ino and gno=#{gno}
+</select>
+
+
+<!-- 리뷰 베스트순 -->
+<select id="interior-review" parameterType="map" resultType="com.myhouse.vo.StoreIndexVO">
+	select * from (select rownum rno, vno, r.email, r.gno, ino, goods_name, star, vcontent, review_simage, TO_CHAR(vdate, 'YYYY/MM/DD HH:MI:SS PM') vdate, nickname, member_spimage 
+	from h_review r, h_member m, h_goods g
+	where r.email = m.email and r.gno=g.gno and ino=#{ino}
+	<if test="status == '베스트순' ">
+		order by star desc) 
+	</if>
+	<if test="status == '최신순' ">
+		order by vdate desc) 
+	</if>
+	<if test="status == '사진리뷰' ">
+		and review_simage IS NOT NULL) 
+	</if>
+	
+	where rno between #{start} and #{end}
+</select>
+
+
+<!-- 스크랩 등록여부 -->
+<select id="interior-scrap-exist" parameterType="map" resultType="int">
+	select count(*) from h_scrap where email=#{email} and ino=#{ino}
+</select>
+
+<!-- 스크랩 처리 :: 삭제 -->
+<delete id="interior-scrap-delete" parameterType="map">
+	delete from h_scrap where email =#{email} and ino=#{ino}
+</delete>
+
+<!-- 스크랩 처리 -->
+<insert id="interior-scrap-insert" parameterType="map">
+	insert into h_scrap values('s_'||seq_h_scrap.nextval,#{email},'',#{ino},sysdate)
+</insert>
+
+<!-- 상세페이지 - 상품 주문 리스트 -->
+<select id="main-order" parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO">
+	select gno, ino, goods_name, goods_simage, to_char(goods_price,'999,999,999,999') goods_price from h_goods where gno=#{gno}
+</select>
+
+<!-- 리뷰 별 갯수 -->
+<select id="review-star5" parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO" >
+	select count(star) star_cnt from h_review v, h_goods g where v.gno = g.gno and star='5' and ino=#{ino}
+</select>
+<select id="review-star4" parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO" >
+	select count(star) star_cnt from h_review v, h_goods g where v.gno = g.gno and star='4' and ino=#{ino}
+</select>
+<select id="review-star3" parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO" >
+	select count(star) star_cnt from h_review v, h_goods g where v.gno = g.gno and star='3' and ino=#{ino}
+</select>
+<select id="review-star2" parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO" >
+	select count(star) star_cnt from h_review v, h_goods g where v.gno = g.gno and star='2' and ino=#{ino}
+</select>
+<select id="review-star1" parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO" >
+	select count(star) star_cnt from h_review v, h_goods g where v.gno = g.gno and star='1' and ino=#{ino}
+</select>
+
+<!-- 상세페이지 : 상단부분 -->
+<select id="interior-top" parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO">
+	select distinct rno, ino, company, ititle, interior_simage, category, gno, goods_simage, goods_name, goods_price, sno, scrap_cnt, review_cnt, 
+		gno_cnt, star_count, star_float, qno, qno_count
+	from (select distinct rno, list.ino, company, ititle, interior_simage, category, list.gno, goods_simage, goods_name, goods_price, sno, scrap_cnt, review_cnt, gno_cnt, star_count,
+		star_float, qno, qno_count, row_number() over(partition by list.gno order by sno asc) as RowIdx
+		from (select rownum rno, i.ino, company, ititle, interior_simage, category, g.gno, goods_simage, goods_name, to_char(goods_price,'999,999,999,999') goods_price,
+		count(gno)over(partition by i.ino) as gno_cnt
+		from h_interior i, h_goods g where i.ino = g.ino and i.ino = #{ino} order by i.ino asc) list, 
+		(select sno, ino, count(sno)over(partition by ino) as scrap_cnt  from h_scrap) scrap, 
+		(select email, vno, star, g.gno, ino, count(vno)over(partition by ino) as review_cnt, ceil(avg(star)over(partition by ino)) as star_count, avg(star)over(partition by ino) as star_float
+		from h_review v, h_goods g where v.gno = g.gno) review,
+		(select qno, q.gno, ino, count(qno)over(partition by ino) as qno_count from h_question q, h_goods g where q.gno = g.gno) question
+		where list.ino = scrap.ino(+) and list.ino = review.ino(+)  and list.ino = question.ino(+)
+		order by ino, sno asc)
+	where RowIdx=1 order by gno asc, goods_price desc
+</select>
+
+<!-- store_index - 상세카테고리 -->
+<select id="category_list"  parameterType="map" resultType="com.myhouse.vo.StoreIndexVO">
+select * from (select * from
+(select distinct rno, istatus, idate, ino, company, ititle, category, tone, color, season, gno, goods_simage, to_char(goods_price,'999,999,999,999') goods_price, star_avg, star_count,ravg
+from (select rownum rno,istatus, idate, ino, company, ititle, category, tone, color, gno, season, goods_simage, goods_price, star_avg, star_count,ravg
+	from(select ino, idate,istatus, company, ititle, category, tone, color, gno, season, goods_simage, goods_price, ceil(avg(star)over(partition by ino)) as star_avg, avg(star)over(partition by ino) ravg,
+		count(star)over(partition by ino) as star_count, row_number() over(partition by ino order by goods_simage asc) as RowIdx
+		from(select idate, i.ino, company, status istatus, ititle, interior_simage, category, tone, color, season, g.gno, goods_simage, goods_name, goods_price, vno, star
+		from h_interior i, h_goods g, h_review v where i.ino(+) = g.ino and g.gno = v.gno(+)))
+	where RowIdx='1' and
+	<foreach collection="category" item="category" index="index">
+	category=#{category}
+	</foreach>
+	)
+	<if test="tonelist.length != 0">
+			where 
+			<foreach collection="tonelist" item="tone" index="index" separator='or'>
+				tone like '%'||#{tone}||'%' 
+			</foreach>
+	</if>
+	)
+	 <if test="colorlist.length != 0 or seasonlist.length != 0">
+			where 
+			 <foreach collection="colorlist" item="color" index="index" separator='or'>
+				color like '%'||#{color}||'%' 
+			 </foreach>
+		<if test="seasonlist.length != 0">
+			<foreach collection="seasonlist" item="season" index="index" separator='or'> 
+				 season like '%'||#{season}||'%'  
+			</foreach>
+		</if>
+	 </if> 
+)where rno between 
+	<foreach collection="start" item="startdo" index="index">
+		#{startdo}
+	</foreach>
+	 and
+	<foreach collection="end" item="enddo" index="index">
+		#{enddo}
+	</foreach>
+	and istatus = 1 
+	<if test="status == '인기순'">
+		 order by ravg desc
+	</if>
+	<if test="status == '낮은가격순'">
+		order by goods_price
+	</if>
+	<if test="status == '높은가격순'">
+		order by goods_price desc
+	</if>
+	<if test="status == '많은리뷰순'">
+		order by star_count desc
+	</if>
+	<if test="status == '최신순'">
+		order by idate
+	</if>
+	
+</select>
+<!-- store_index - 상세카테고리 - 리스트 카운트!! -->
+<select id="category_list_count"  parameterType="map" resultType="int">
+select count(*) from 
+(select distinct rno, istatus, idate, ino, company, ititle, category, tone, color, season, gno, goods_simage, to_char(goods_price,'999,999,999,999') goods_price, star_avg, star_count,ravg
+from (select rownum rno,istatus, idate, ino, company, ititle, category, tone, color, gno, season, goods_simage, goods_price, star_avg, star_count,ravg
+	from(select ino, idate,istatus, company, ititle, category, tone, color, gno, season, goods_simage, goods_price, ceil(avg(star)over(partition by ino)) as star_avg, avg(star)over(partition by ino) ravg,
+		count(star)over(partition by ino) as star_count, row_number() over(partition by ino order by goods_simage asc) as RowIdx
+		from(select idate, i.ino, company, status istatus, ititle, interior_simage, category, tone, color, season, g.gno, goods_simage, goods_name, goods_price, vno, star
+		from h_interior i, h_goods g, h_review v where i.ino(+) = g.ino and g.gno = v.gno(+)))
+	where RowIdx='1' and
+	<foreach collection="category" item="category" index="index">
+	category=#{category}
+	</foreach>
+	and istatus=1 )
+	<if test="tonelist.length != 0">
+			where 
+			<foreach collection="tonelist" item="tone" index="index" separator='or'>
+				tone like '%'||#{tone}||'%' 
+			</foreach>
+	</if>
+	)
+	 <if test="colorlist.length != 0 or seasonlist.length != 0">
+			where 
+			 <foreach collection="colorlist" item="color" index="index" separator='or'>
+				color like '%'||#{color}||'%' 
+			 </foreach>
+		<if test="seasonlist.length != 0">
+			<foreach collection="seasonlist" item="season" index="index" separator='or'> 
+				 season like '%'||#{season}||'%'  
+			</foreach>
+		</if>
+	 </if> 
+	
+</select>
+
+<!-- store_index - list -->
+<select id="interior-list"  parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO">
+	select rownum rno,istatus, idate, ino, company, ititle, category, tone, color, gno, season, goods_simage, goods_price, star_avg, star_count,ravg
+	from(select ino, idate,istatus, company, ititle, category, tone, color, gno, season, goods_simage, goods_price, ceil(avg(star)over(partition by ino)) as star_avg, avg(star)over(partition by ino) ravg,
+		count(star)over(partition by ino) as star_count, row_number() over(partition by ino order by goods_simage asc) as RowIdx
+		from(select idate, i.ino, company, status istatus, ititle, interior_simage, category, tone, color, season, g.gno, goods_simage, goods_name, goods_price, vno, star
+		from h_interior i, h_goods g, h_review v where i.ino(+) = g.ino and g.gno = v.gno(+)))
+	where RowIdx='1' and  category=#{category} and istatus=1
+</select>
+
+<!-- 카테고리별 인테리어게시물 총 갯수 -->
+<select id="interior-list-count" parameterType="java.lang.String" resultType="int">
+	select count(*) from h_interior where category=#{category} and status =1
+</select>
+
+
+</mapper>

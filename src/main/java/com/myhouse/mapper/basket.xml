@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="mapper.basket">
+    <!-- 1. 장바구니 추가 -->
+    <insert id="insertCart">
+        INSERT INTO h_basket 
+        VALUES ('b_'||sequ_h_basket.nextval, #{email}, #{gno}, #{bcount})
+    </insert>
+    <!-- 2. 장바구니 목록 -->
+    <select id="listCart" resultType="com.myhouse.vo.basketVO">
+ 		SELECT
+            b.bno AS bno, 
+            b.email AS email,
+            g.gno As gno,
+            g.goods_name AS goods_name, 
+            b.bcount, 
+ 			to_char(g.goods_price,'999,999,999,999') AS goods_price,to_char((goods_price * bcount),'999,999,999,999') money,
+            g.goods_simage
+        FROM
+            h_member m, h_goods g, h_basket b
+        WHERE m.email = b.email
+            AND g.gno = b.gno
+            AND b.email = #{email}
+        ORDER BY
+            b.email
+
+    </select>
+    <!-- 3. 장바구니 전체 금액 -->
+    <select id="sumMoney" resultType="String">
+        SELECT NVL(to_char(SUM(goods_price * bcount),'999,999,999,999'), 0) money
+        FROM h_basket b, h_goods g
+        WHERE b.gno = g.gno AND b.email = #{email}
+    </select>
+    <!-- 4. 장바구니 수정 -->
+    <update id="modifyCart">
+        UPDATE h_basket    
+        SET bcount = #{bcount} 
+        WHERE mail= #{mail} 
+        AND gno = #{gno}
+    </update>
+    <!-- 5. 장바구니 삭제 -->
+    <delete id="deleteCart">
+        DELETE FROM h_basket
+        WHERE bno = #{bno}
+    </delete>
+    <!-- 6. 장바구니에 동일한 상품 레코드 확인 -->
+    <select id="countCart" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM h_basket
+        WHERE email = #{email} 
+        AND gno = #{gno}
+    </select>
+    <!-- 7. 장바구니에 동일한 상품이 존재하면 수정 -->
+    <update id="updateCart">
+        UPDATE h_basket 
+        SET bcount = bcount + #{bcount} 
+        WHERE email= #{email} 
+        AND gno = #{gno}
+    </update>
+</mapper>

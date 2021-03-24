@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="mapper.photo">
+	<!-- 사진 내용 -->
+	<select id="content" parameterType="java.lang.String" resultType="com.myhouse.vo.PhotoVO">
+		select pno,email,pcontent,pstyle, ptype, ptag,photo_image, photo_simage, 
+			to_char(pdate,'yyyy.mm.dd')pdate, phits from h_photo where pno=#{pno}
+	</select>
+	
+	<!-- 조회수 업데이트 -->
+	<update id="updatehits" parameterType="java.lang.String">
+		update h_photo set phits = phits+1 where pno=#{pno}
+	</update>
+	
+	<!-- 작성자 정보 -->
+	<select id="getwriterinfo" parameterType="java.lang.String" resultType="com.myhouse.vo.MemberVO">
+		select nickname, member_spimage, intro from h_member, h_photo 
+		where h_member.email=h_photo.email and pno=#{pno}
+	</select>
+	
+	<!-- 작성자 사진 리스트 -->
+	<select id="getphotos" parameterType="java.lang.String" resultType="com.myhouse.vo.PhotoVO">
+		select rownum rno, pno, photo_simage
+		from(select rownum rno, pno, photo_simage from h_photo where email in 
+				(select h_member.email from h_member,h_photo where h_member.email=h_photo.email and pno=#{pno})
+			order by pdate)
+		where rownum between 1 and 4
+	</select>
+	
+	<!-- 작성자 여부 -->
+	<select id ="getwriter"  parameterType="map" resultType="int">
+	  select count(*) from h_photo where email=#{email} and pno=#{pno}
+	</select> 
+	
+	<!-- 사진 수정 -->
+	<update id="update" parameterType="com.myhouse.vo.PhotoVO">
+		update h_photo 
+		set pcontent=#{pcontent} , pstyle=#{pstyle}, ptype=#{ptype}, ptag=#{ptag}
+		<choose>
+			<when test="photo_image != null">
+				,photo_image=#{photo_image}, photo_simage=#{photo_simage} 
+			</when>
+		</choose>
+		where pno=#{pno}			
+	</update>
+	
+	<!-- 사진 삭제 -->
+	<delete id="getdelete" parameterType="java.lang.String" >
+		delete from h_photo where pno =#{pno}
+	</delete>
+ 	
+</mapper>

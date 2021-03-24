@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="mapper.like">
+	<select id="countlike" parameterType="java.lang.String" resultType="int">
+		select count(*) from h_like where pno=#{pno}
+	</select>
+	
+	<insert id="getinsert" parameterType="map" >
+		insert into h_like values ('l'||LIKE_SEQUENCE.nextval,#{email},#{pno},1)
+	</insert>
+	
+	<delete id="getdelete" parameterType="map">
+		delete from h_like where email=#{email} and pno=#{pno}
+	</delete>
+	
+	<select id="getlike" parameterType="map" resultType="int">
+	 	select count(h_like.lno) from h_photo,h_like 
+	 	where h_photo.pno=h_like.pno and h_like.email=#{email} and h_photo.pno=#{pno}
+	</select>
+</mapper>

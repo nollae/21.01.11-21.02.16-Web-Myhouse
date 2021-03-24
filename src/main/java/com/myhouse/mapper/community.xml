@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="mapper.community">
+	
+	<select id="listcount" resultType="int">
+	 	select count(*) from h_photo
+	</select>
+	
+ 	<select id="list" parameterType="map" resultType="com.myhouse.vo.CommunityVO">
+        select * from (
+		select rownum prno, photo.* from (
+ 		select p.pno, m.email w_email, m.nickname w_nickname, m.intro intro, m.member_image w_member_image, m.member_spimage w_member_simage,
+     		 pcontent, pstyle, ptype, photo_image, photo_simage, to_char(pdate,'yyyy.mm.dd')pdate, phits, 
+      		c.nickname c_nickname, c.member_image c_member_image, c.member_spimage c_member_simage, c_content,
+      		plike, scrap, comments, islike, isscrap, isfollow, iswriter
+		from h_photo p, h_member m,
+		    (select * from(
+		    (select row_number() over(partition by pno order by pno) rno, pno, cno, nickname, member_image, member_spimage, c_content 
+		    from h_photo_comment, h_member where h_photo_comment.email=h_member.email and c_depth=1 order by cdate desc)) where rno=1) c,
+		    (select h_photo.pno pno, count(h_like.lno) plike from h_like, h_photo where h_photo.pno = h_like.pno(+) group by h_photo.pno) l,
+		    (select h_photo.pno pno, count(h_scrap.sno) scrap from h_scrap, h_photo where h_photo.pno = h_scrap.pno(+) group by h_photo.pno) s,
+		    (select pno, count(*)comments from h_photo_comment group by pno) co,
+        (select h_photo.pno pno, count(h_like.lno) islike from h_photo,h_like where h_photo.pno=h_like.pno and h_like.email=#{email} group by h_photo.pno) mlike,
+        (select h_photo.pno pno, count(h_scrap.sno) isscrap from h_photo,h_scrap where h_photo.pno=h_scrap.pno and h_scrap.email=#{email} group by h_photo.pno) mscrap,
+        (select h_photo.pno pno, instr(h_member.follower ,#{email}) isfollow from h_photo, h_member where h_photo.email = h_member.email) follow,
+        (select h_photo.pno pno, count(h_member.email) iswriter from h_photo, h_member where h_photo.email =#{email} group by h_photo.pno) writer
+      	where p.email=m.email and p.pno=c.pno(+) and  p.pno = l.pno and p.pno=s.pno and co.pno(+) = p.pno and mlike.pno(+)=p.pno and mscrap.pno(+)=p.pno and follow.pno(+)=p.pno and writer.pno(+)=p.pno
+        order by pdate desc, phits desc) photo)
+      where prno between #{start} and #{end}
+   </select> 
+   
+
+	<select id="listcountajax" parameterType="map" resultType="int">
+			select count(*) from h_photo
+			<choose>
+				<when test="type != ''">
+				 where ptype LIKE '%'||#{type}||'%'
+				<if test="style != null">
+					and pstyle LIKE '%'||#{style}||'%'
+				</if>
+				</when>
+				<otherwise>
+				<if test="style != ''">
+					where pstyle LIKE '%'||#{style}||'%'
+				</if>
+				</otherwise>
+			</choose>
+  	</select>
+  	
+  	<select id="sortlist" parameterType="map" resultType="com.myhouse.vo.CommunityVO">
+	 	select * from (
+		select rownum prno, photo.* from (
+ 		select p.pno, m.email w_email, m.nickname w_nickname, m.intro intro, m.member_image w_member_image, m.member_spimage w_member_simage,
+     		 pcontent, pstyle, ptype, photo_image, photo_simage, to_char(pdate,'yyyy.mm.dd')pdate, phits, 
+      		c.nickname c_nickname, c.member_image c_member_image, c.member_spimage c_member_simage, c_content,
+      		plike, scrap, comments, islike, isscrap, isfollow, iswriter
+		from h_photo p, h_member m,
+		    (select * from(
+		    (select row_number() over(partition by pno order by pno) rno, pno, cno, nickname, member_image, member_spimage, c_content 
+		    from h_photo_comment, h_member where h_photo_comment.email=h_member.email and c_depth=1 order by cdate desc)) where rno=1) c,
+		    (select h_photo.pno pno, count(h_like.lno) plike from h_like, h_photo where h_photo.pno = h_like.pno(+) group by h_photo.pno) l,
+		    (select h_photo.pno pno, count(h_scrap.sno) scrap from h_scrap, h_photo where h_photo.pno = h_scrap.pno(+) group by h_photo.pno) s,
+		    (select pno, count(*)comments from h_photo_comment group by pno) co,
+        (select h_photo.pno pno, count(h_like.lno) islike from h_photo,h_like where h_photo.pno=h_like.pno and h_like.email=#{email} group by h_photo.pno) mlike,
+        (select h_photo.pno pno, count(h_scrap.sno) isscrap from h_photo,h_scrap where h_photo.pno=h_scrap.pno and h_scrap.email=#{email} group by h_photo.pno) mscrap,
+        (select h_photo.pno pno, instr(h_member.follower ,#{email}) isfollow from h_photo, h_member where h_photo.email = h_member.email) follow,
+        (select h_photo.pno pno, count(h_member.email) iswriter from h_photo, h_member where h_photo.email =#{email} group by h_photo.pno) writer
+      	where p.email=m.email and p.pno=c.pno(+) and  p.pno = l.pno and p.pno=s.pno and co.pno(+) = p.pno and mlike.pno(+)=p.pno and mscrap.pno(+)=p.pno and follow.pno(+)=p.pno and writer.pno(+)=p.pno
+		<if test="type != ''">
+			and ptype LIKE '%'||#{type}||'%'
+		</if>
+		<if test="style != ''">
+			 and pstyle LIKE '%'||#{style}||'%'
+		</if> 
+		<choose>
+			<when test="order == ''">
+				order by pdate desc, phits desc
+			</when>
+			<when test="order == '최근인기순'">
+				order by pdate desc, phits desc
+			</when>
+			<when test="order == '역대인기순'">
+				order by phits desc
+			</when>
+			<when test="order == '최신순'">
+				order by pdate desc
+			</when>
+		</choose>
+			) photo)
+		where prno between #{start} and #{end}
+	</select> 
+  	
+</mapper>

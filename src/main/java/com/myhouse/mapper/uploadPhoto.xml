@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.uploadphoto">
+
+    <!--id:insert -->
+	<insert id="insert" parameterType="com.myhouse.vo.PhotoVO">
+	<!--test로 jdbcType=VARCHAR를 이용해 그냥 넣어버림-->
+		insert into h_photo
+		values('p_'||sequ_h_photo.nextval,#{email},#{pcontent},#{pstyle},#{ptype},#{ptag},#{photo_image},#{photo_simage},sysdate,0)
+	</insert>
+	
+	<!-- store_index - list -->
+<select id="list1"  parameterType="java.lang.String" resultType="com.myhouse.vo.StoreIndexVO">
+	select ino, company, ititle, category, tone, color, gno, goods_simage, goods_price, star_avg, star_count
+	from(select ino, company, ititle, category, tone, color, gno, goods_simage, goods_price, avg(star)over(partition by ino) as star_avg, 
+		count(star)over(partition by ino) as star_count, row_number() over(partition by ititle order by goods_simage asc) as RowIdx
+		from(select i.ino, company, ititle, interior_simage, category, tone, color, g.gno, goods_simage, goods_name, goods_price, vno, star
+		from h_interior i, h_goods g, h_review v where i.ino(+) = g.ino and g.gno = v.gno(+)))
+	where RowIdx='1' and ititle like '%${value}%'
+</select>
+	<!-- tag:insert  -->
+	<insert id="InsertTag" parameterType="map">
+		insert into h_tag
+    	values('t_'||seq_h_tag.nextval,#{pno},#{gno})
+	</insert>
+	<!-- pno:check -->
+	<select id="pnoCheck" parameterType="map" resultType="java.lang.String">
+		select pno from h_photo
+		where email=#{email} and pcontent=#{pcontent} and pstyle=#{pstyle} and ptype=#{ptype} and ptag=#{ptag} and photo_image=#{photo_image} and photo_simage=#{photo_simage}
+	</select>
+</mapper>
